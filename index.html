@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="/js/script.js"></script>
+    <title>Character Sheet</title>
+    <link
+      rel="canonical"
+      href="https://getbootstrap.com/docs/5.0/examples/sign-in/"
+    />
+    <!-- Bootstrap core CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .bd-placeholder-img {
+         font-size: 1.125rem;
+         text-anchor: middle;
+         -webkit-user-select: none;
+         -moz-user-select: none;
+         user-select: none;
+      }
+
+      @media (min-width: 768px) {
+         .bd-placeholder-img-lg {
+            font-size: 3.5rem;
+         }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="css/signin.css" rel="stylesheet" />
+    <script src="backendClasses/routes.js"></script>
+  </head>
+
+  <body class="text-center">
+    <main class="form-signin">
+      <form>
+        <div class="input-group">
+          <span class="input-group-text">First and last name </span>
+          <input type="text" aria-label="First name" class="form-control" />
+          <input type="text" aria-label="Last name" class="form-control" />
+        </div>
+        <select
+          id="race-select"
+          name="racas"
+          class="form-select form-select-lg mb-3"
+          aria-label=".form-select-lg example"
+        >
+          <option disabled selected>Raça</option>
+        </select>
+        <select
+          id="subrace-select"
+          name="subraces"
+          class="form-select form-select-lg mb-3"
+          aria-label=".form-select-lg example"
+        >
+          <option disabled selected>Sub-Raca</option>
+        </select>
+
+        <select
+          id="class-select"
+          name="classes"
+          class="form-select form-select-lg mb-3"
+          aria-label=".form-select-lg example"
+        >
+          <option disabled selected>Classe</option>
+        </select>
+        <script>
+
+          // Função para atualizar as opções do class-select
+function updateClassSelect(classes) {
+  const classSelect = document.getElementById('class-select');
+
+  // Limpar as opções existentes
+  classSelect.innerHTML = '';
+
+  // Adicionar as novas opções
+  classes.forEach(className => {
+    const option = document.createElement('option');
+    option.value = className;
+    option.text = className;
+    classSelect.appendChild(option);
+  });
+}
+
+// Fazer a requisição AJAX para obter as classes
+const xhr = new XMLHttpRequest();
+xhr.open('GET', '/classes', true);
+xhr.onreadystatechange = function () {
+  if (xhr.readyState === 4 && xhr.status === 200) {
+    const response = JSON.parse(xhr.responseText);
+    const classes = response.classes;
+    updateClassSelect(classes);
+  }
+};
+xhr.send();
+
+          </script>
+
+        <select
+          disabled
+          class="form-select form-select-lg mb-3"
+          aria-label=".form-select-lg example"
+        >
+          <option disabled selected>Arquétipo</option>
+          <option value="1">One</option>
+          <option value="2">Two</option>
+          <option value="3">Three</option>
+        </select>
+        <select
+          class="form-select form-select-lg mb-3"
+          aria-label=".form-select-lg example"
+        >
+          <option disabled selected>Background</option>
+          <option value="1">One</option>
+          <option value="2">Two</option>
+          <option value="3">Three</option>
+        </select>
+        <div class="container">
+          <div class="row">
+            <div class="col">Str</div>
+            <div class="col">Dex</div>
+            <div class="col">Con</div>
+          </div>
+        </div>
+        <div class="container">
+          <div class="row">
+            <div class="col">Int</div>
+            <div class="col">Wis</div>
+            <div class="col">Cha</div>
+          </div>
+        </div>
+        <div class="col-auto">Bonus Racial</div>
+        <div class="col-sm-9 bg-light p-3 border">2+ int +1 con</div>
+        <div class="container">
+          <div class="row">
+            <div class="col">+8</div>
+            <div class="col">perícia:</div>
+            <div class="form-check form-check-inline col">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="inlineCheckbox1"
+                value="option1"
+              />
+              <label class="form-check-label" for="inlineCheckbox1"
+                >Proficiente
+              </label>
+            </div>
+            <div class="form-check form-check-inline col">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="inlineCheckbox2"
+                value="option2"
+              />
+              <label class="form-check-label" for="inlineCheckbox2"
+                >expertise
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </main>
+    <script>
+      // Função para atualizar as opções do class-select
+      function updateClassSelect(classes) {
+        const classSelect = document.getElementById("class-select");
+
+        // Limpar as opções existentes
+        classSelect.innerHTML = "";
+
+        // Adicionar as novas opções
+        classes.forEach((className) => {
+          const option = document.createElement("option");
+          option.value = className;
+          option.text = className;
+          classSelect.appendChild(option);
+        });
+      }
+
+      // Fazer a requisição AJAX para obter as classes
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", "/classes", true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          const classes = response.classes;
+          updateClassSelect(classes);
+        }
+      };
+      xhr.send();
+    </script>
+  </body>
+</html>
