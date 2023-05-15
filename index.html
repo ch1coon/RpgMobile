@@ -31,6 +31,34 @@
     <!-- Custom styles for this template -->
     <link href="css/signin.css" rel="stylesheet" />
     <script src="backendClasses/routes.js"></script>
+    <style>
+      .attribute {
+        display: inline-block;
+        text-align: center;
+        margin-right: 10px;
+      }
+
+      .attribute-value {
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      .attribute-modifier {
+        font-size: 18px;
+        color: green;
+      }
+    </style>
+    <script>
+      function updateModifier(inputId, modifierId) {
+        const input = document.getElementById(inputId);
+        const modifier = document.getElementById(modifierId);
+
+        const value = parseInt(input.value);
+        const modifierValue = Math.floor((value - 10) / 2);
+
+        modifier.textContent = modifierValue >= 0 ? `+${modifierValue}` : modifierValue;
+      }
+    </script>
   </head>
 
   <body class="text-center">
@@ -116,18 +144,15 @@ xhr.send();
         </select>
         <div class="container">
           <div class="row">
-            <div class="col">Str</div>
-            <div class="col">Dex</div>
-            <div class="col">Con</div>
-          </div>
-        </div>
-        <div class="container">
-          <div class="row">
-            <div class="col">Int</div>
-            <div class="col">Wis</div>
-            <div class="col">Cha</div>
-          </div>
-        </div>
+            <div class="attribute">
+              <span id="strength-modifier" class="attribute-modifier">0</span>
+              <br />
+              <input type="number" id="strength" min="1" max="20" onchange="updateModifier('strength', 'strength-modifier')" />
+              <br />
+               <span id="strength-value" class="attribute-value">Str</span>
+      
+    </div>
+
         <div class="col-auto">Bonus Racial</div>
         <div class="col-sm-9 bg-light p-3 border">2+ int +1 con</div>
         <div class="container">
