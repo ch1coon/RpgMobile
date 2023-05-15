@@ -72,9 +72,6 @@
 function updateClassSelect(classes) {
   const classSelect = document.getElementById('class-select');
 
-  // Limpar as opções existentes
-  classSelect.innerHTML = '';
-
   // Adicionar as novas opções
   classes.forEach(className => {
     const option = document.createElement('option');
