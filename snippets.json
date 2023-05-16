@@ -1,0 +1,28 @@
+{
+    "_meta": {
+        "internalCopies": ["background"]
+      },
+    {
+        "name": "",
+        "source": "",
+        "page": 0,
+        "skillProficiencies": [
+            {
+                "": true
+            }
+        ],
+        "toolProficiencies": [
+            {
+                "": true
+            }
+        ],
+        "languageProficiencies": [
+            {
+                "": true
+            }
+        ],
+        "entries": [
+            ""
+        ]
+    }
+}
