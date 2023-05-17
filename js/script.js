@@ -4,36 +4,68 @@ function carregarOpcoesRacas(idSelect) {
   fetch("../data/races.json")
     .then((response) => response.json())
     .then((data) => {
+      const uniqueRaces = new Set();
+
       data.race.forEach((race) => {
+        if (!race.traitTags || !race.traitTags.includes("NPC Race")) {
+          const raceName = race.name;
+          if (!raceName.includes("(")) {
+            uniqueRaces.add(raceName);
+          }
+        }
+      });
+
+
+
+      uniqueRaces.forEach((raceName) => {
         const option = document.createElement("option");
-        option.text = `${race.name} (${race.source})`;
+        option.text = raceName;
         select.add(option);
       });
+    })
+    .catch((error) => {
+      //console.error("Erro ao carregar o JSON races.json:", error);
     });
 }
 
-function carregarOpcoesSubracas(raceName, idSelect) {
-  const select = document.getElementById(idSelect);
-  select.innerHTML = "";
 
-  fetch("../data/subRaces.json")
+carregarOpcoesRacas("race-select");
+
+function carregarOpcoesSubracas() {
+  const raceSelect = document.getElementById("race-select");
+  const subraceSelect = document.getElementById("subraces-select");
+
+  if (!subraceSelect) {
+    console.error("Elemento subraces-select não encontrado.");
+    return;
+  }
+
+  const selectedRace = raceSelect.value;
+
+  fetch("../data/races.json")
     .then((response) => response.json())
     .then((data) => {
-      const subraces = data.subrace.filter(
-        (subrace) => subrace.raceName === raceName
-      );
-      if (subraces.length > 0) {
-        subraces.forEach((subrace) => {
+      const race = data.race.find((entry) => entry.name === selectedRace);
+
+      if (race && race.subrace) {
+        subraceSelect.innerHTML = ""; // Limpar as opções existentes
+
+        race.subrace.forEach((subrace) => {
           const option = document.createElement("option");
           option.text = `${subrace.name} (${subrace.source})`;
-          select.add(option);
+          subraceSelect.add(option);
         });
-        select.style.display = "block";
-      } else {
-        select.style.display = "none";
       }
+    })
+    .catch((error) => {
+      console.error("Erro ao carregar o JSON races.json:", error);
     });
 }
+
+
+
+
+
 
 function carregarOpcoesBackgrounds(idSelect) {
   const select = document.getElementById(idSelect);
@@ -53,53 +85,102 @@ function atualizarAtributos(raceName, subraceName) {
   fetch("../data/races.json")
     .then((response) => response.json())
     .then((data) => {
-      let race;
+      const races = data.race.filter((entry) => entry.name === raceName);
 
-      if (Array.isArray(data) && data.length > 0) {
-        const filteredData = data.filter((race) => race.name === raceName);
-        race = filteredData[0];
+      if (races.length > 0) {
+        let selectedRace = null;
+        const selectedSource = races.length > 1 ? getSelectedSource() : null;
 
-        if (race) {
-          let attributes = {};
+        if (selectedSource) {
+          selectedRace = races.find((entry) => entry.source === selectedSource);
+        } else {
+          selectedRace = races.find((entry) => !entry.source || entry.source !== "NPC Race");
+        }
 
-          if (subraceName) {
-            const subrace = race.subrace.find((subrace) => subrace.name === subraceName);
-            if (subrace && subrace.ability) {
-              attributes = { ...race.ability, ...subrace.ability };
-            } else {
-              attributes = race.ability;
+        if (!selectedRace) {
+          console.error("Raça não encontrada no arquivo JSON");
+          return;
+        }
+
+        let attributes = {};
+
+        if (subraceName) {
+          const subrace = selectedRace.subrace.find((subrace) => subrace.name === subraceName);
+          if (subrace) {
+            if (subrace.ability) {
+              attributes = { ...subrace.ability[0] };
+            } else if (subrace.lineage === "VRGR") {
+              attributes = {
+                choose: {
+                  from: ["Escolha qualquer", "Escolha qualquer outro"],
+                  count: 2,
+                  amount: 2
+                }
+              };
+            } else if (subrace.lineage === "UA1") {
+              attributes = {
+                choose: {
+                  from: ["Escolha qualquer", "Escolha qualquer outro"],
+                  count: 2,
+                  amount: 1
+                }
+              };
             }
           } else {
-            attributes = race.ability;
+            console.error("Subraça não encontrada para a raça informada");
           }
+        } else {
+          if (selectedRace.ability) {
+            attributes = { ...selectedRace.ability[0] };
+          } else if (selectedRace.lineage === "VRGR") {
+            attributes = {
+              choose: {
+                from: ["Escolha qualquer", "Escolha qualquer outro"],
+                count: 2,
+                amount: 2
+              }
+            };
+          } else if (selectedRace.lineage === "UA1") {
+            attributes = {
+              choose: {
+                from: ["Escolha qualquer", "Escolha qualquer outro"],
+                count: 2,
+                amount: 1
+              }
+            };
+          }
+        }
 
-          if (attributes && Object.keys(attributes).length > 0) {
-            const bonusTextDiv = document.getElementById("bonus-text");
-            bonusTextDiv.innerHTML = "";
-          
-            if (attributes.choose) {
+        if (attributes && Object.keys(attributes).length > 0) {
+          const bonusTextDiv = document.getElementById("bonus-text");
+          bonusTextDiv.innerHTML = "";
+
+          if (attributes.choose) {
+            if (attributes.choose === "VRGR") {
+              bonusTextDiv.textContent = "Escolha uma das seguintes opções: (a) Escolha qualquer +2; escolha qualquer outro +1 ou (b) Escolha três diferentes +1";
+            } else if (attributes.choose === "UA1") {
+              bonusTextDiv.textContent = "Escolha qualquer +2; escolha qualquer outro +1";
+            } else {
               const { choose, ...remainingAttributes } = attributes;
               const chooseOptions = choose.from.map((option) => {
                 const value = remainingAttributes[option];
                 return `${option} + ${value}`;
               });
               bonusTextDiv.textContent = `Escolha entre: ${chooseOptions.join(", ")}`;
-            } else {
-              const bonusText = Object.entries(attributes)
-                .filter(([_, value]) => value !== 0)
-                .map(([attribute, value]) => `${attribute} + ${value}`)
-                .join(" ");
-              bonusTextDiv.textContent = bonusText;
             }
           } else {
-            const bonusTextDiv = document.getElementById("bonus-text");
-            bonusTextDiv.textContent = "Atributos não encontrados";
+            const bonusText = Object.entries(attributes)
+              .filter(([_, value]) => value !== 0)
+              .map(([attribute, value]) => `${attribute} + ${value}`)
+              .join(" ");
+            bonusTextDiv.textContent = bonusText;
           }
         } else {
-          console.error("Raça não encontrada no arquivo JSON");
+          const bonusTextDiv = document.getElementById("bonus-text");
+          bonusTextDiv.textContent = "Atributos não encontrados";
         }
       } else {
-        console.error("O arquivo JSON não contém dados válidos");
+        console.error("Raça não encontrada no arquivo JSON");
       }
     })
     .catch((error) => {
@@ -107,26 +188,36 @@ function atualizarAtributos(raceName, subraceName) {
     });
 }
 
+function getSelectedSource() {
+  const sourceSelect = document.getElementById("source-select");
+  return sourceSelect.value;
+}
+
+
+
+
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
   const raceSelect = document.getElementById("race-select");
-  const subraceSelect = document.getElementById("subrace-select");
+  const subraceSelect = document.getElementById("subraces-select");
   const backgroundSelect = document.getElementById("background-select");
 
   raceSelect.addEventListener("change", () => {
-    const raceName = raceSelect.value.split(" (")[0];
-    carregarOpcoesSubracas(raceName, "subrace-select");
-    if (raceName) {
-      atualizarAtributos(raceName);
-    } else {
-      const bonusTextDiv = document.getElementById("bonus-text");
-      bonusTextDiv.textContent = "";
-    }
-  });
+  const raceName = raceSelect.value.split(" (")[0];
+  carregarOpcoesSubracas(raceName, "subraces-select");
+  if (raceName) {
+    atualizarAtributos(raceName);
+  } else {
+    const bonusTextDiv = document.getElementById("bonus-text");
+    bonusTextDiv.textContent = "";
+  }
+});
+
 
   carregarOpcoesRacas("race-select");
-  carregarOpcoesSubracas(raceSelect.value.split(" (")[0], "subrace-select");
+  carregarOpcoesSubracas(raceSelect.value.split(" (")[0], "subraces-select");
   carregarOpcoesBackgrounds("background-select");
 
   const initialRaceName = raceSelect.value.split(" (")[0];
