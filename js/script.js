@@ -47,7 +47,9 @@ function carregarOpcoesSubracas(selectedRaceName) {
     .then((data) => {
       const matchingRaces = data.race.filter((race) => race.name.includes(selectedRaceName));
 
-      const matchingSubraces = data.subrace.filter((subrace) => subrace.raceName.includes(selectedRaceName));
+      const matchingSubraces = data.subrace.filter((subrace) => subrace.raceName === selectedRaceName);
+
+
 
       subraceSelect.innerHTML = ""; // Limpar as opções existentes
 
@@ -86,114 +88,6 @@ function carregarOpcoesBackgrounds(idSelect) {
     });
 }
 
-function atualizarAtributos(selectedSubrace) {
-  fetch("../data/races.json")
-    .then((response) => response.json())
-    .then((data) => {
-      let selectedData;
-
-      if (selectedSubrace.includes("race")) {
-        const selectedRaceName = selectedSubrace.split(" (")[0];
-        selectedData = data.race.find((race) => race.name === selectedRaceName);
-      } else if (selectedSubrace.includes("subrace")) {
-        const selectedSubraceName = selectedSubrace.split(" (")[0];
-        selectedData = data.subrace.find((subrace) => subrace.name === selectedSubraceName);
-      }
-
-      if (!selectedData) {
-        console.error("Raça ou subraça não encontrada no arquivo JSON");
-        return;
-      }
-
-      if (selectedData.ability) {
-        const bonusTextDiv = document.getElementById("bonus-text");
-        bonusTextDiv.textContent = "";
-        const abilities = selectedData.ability[0];
-        const bonusText = Object.entries(abilities)
-          .map(([attribute, value]) => `${attribute}: +${value}`)
-          .join(", ");
-        bonusTextDiv.textContent = bonusText;
-      } else if (selectedData.lineage === "UA1") {
-        const bonusTextDiv = document.getElementById("bonus-text");
-        bonusTextDiv.textContent = "";
-
-        const selectGroup = document.createElement("div");
-        selectGroup.className = "row";
-
-        const select1 = document.createElement("select");
-        select1.className = "form-select col";
-        select1.innerHTML = `
-          <option value="strength">+2</option>
-          <option value="dexterity">+2</option>
-          <option value="constitution">+2</option>
-          <option value="intelligence">+2</option>
-          <option value="wisdom">+2</option>
-          <option value="charisma">+2</option>
-        `;
-        selectGroup.appendChild(select1);
-
-        const select2 = document.createElement("select");
-        select2.className = "form-select col";
-        select2.innerHTML = `
-          <option value="strength">+1</option>
-          <option value="dexterity">+1</option>
-          <option value="constitution">+1</option>
-          <option value="intelligence">+1</option>
-          <option value="wisdom">+1</option>
-          <option value="charisma">+1</option>
-        `;
-        selectGroup.appendChild(select2);
-
-        bonusTextDiv.appendChild(selectGroup);
-      } else if (selectedData.lineage === "VRGR") {
-        const bonusTextDiv = document.getElementById("bonus-text");
-        bonusTextDiv.textContent = "";
-
-        const selectGroup = document.createElement("div");
-        selectGroup.className = "row";
-
-        const select1 = document.createElement("select");
-        select1.className = "form-select col";
-        select1.innerHTML = `
-          <option value="+2|+1">+2|+1</option>
-          <option value="+1|+1|+1">+1|+1|+1</option>
-        `;
-        selectGroup.appendChild(select1);
-
-        bonusTextDiv.appendChild(selectGroup);
-
-        select1.addEventListener("change", (event) => {
-          const selectedValue = event.target.value;
-          const values = selectedValue.split("|");
-          const selectGroup = document.createElement("div");
-          selectGroup.className = "row";
-
-          values.forEach((value) => {
-            const select = document.createElement("select");
-            select.className = "form-select col";
-            select.innerHTML = `
-              <option value="strength">+${value}</option>
-              <option value="dexterity">+${value}</option>
-              <option value="constitution">+${value}</option>
-              <option value="intelligence">+${value}</option>
-              <option value="wisdom">+${value}</option>
-              <option value="charisma">+${value}</option>
-            `;
-            selectGroup.appendChild(select);
-          });
-
-          bonusTextDiv.appendChild(selectGroup);
-        });
-      } else {
-        console.log("É uma cópia");
-      }
-    })
-    .catch((error) => {
-      console.error("Erro ao carregar o JSON races.json:", error);
-    });
-}
-
-
 
 function criarSelectsUA1(selectedSubrace) {
   const selectContainer = document.getElementById("select-container");
@@ -205,8 +99,6 @@ function criarSelectsUA1(selectedSubrace) {
   select2.classList.add("form-select", "mb-3");
 
   const options = [
-    "Escolha qualquer",
-    "Escolha qualquer outro",
     "Strength",
     "Dexterity",
     "Constitution",
@@ -215,12 +107,30 @@ function criarSelectsUA1(selectedSubrace) {
     "Charisma",
   ];
 
+  // Adicionar opção "+2" ao primeiro select
+  const optionPlus2 = document.createElement("option");
+  optionPlus2.value = "+2";
+  optionPlus2.textContent = "+2";
+  optionPlus2.selected = true; // Selecionar a opção
+  optionPlus2.disabled = true; // Desativar a opção
+  select1.appendChild(optionPlus2);
+
   options.forEach((option) => {
     const option1 = document.createElement("option");
     option1.value = option;
     option1.textContent = option;
     select1.appendChild(option1);
+  });
 
+  // Adicionar opção "+1" ao segundo select
+  const optionPlus2Select2 = document.createElement("option");
+  optionPlus2Select2.value = "+1";
+  optionPlus2Select2.textContent = "+1";
+  optionPlus2Select2.selected = true; // Selecionar a opção
+  optionPlus2Select2.disabled = true; // Desativar a opção
+  select2.appendChild(optionPlus2Select2);
+
+  options.forEach((option) => {
     const option2 = document.createElement("option");
     option2.value = option;
     option2.textContent = option;
@@ -230,23 +140,75 @@ function criarSelectsUA1(selectedSubrace) {
   selectContainer.appendChild(select1);
   selectContainer.appendChild(select2);
 
-  select1.addEventListener("change", () => {
-    select2.querySelector(`option[value="${select1.value}"]`).disabled = true;
-  });
+  let previousOptionSelect1 = optionPlus2; // Armazenar a opção anterior selecionada do select 1
+  let previousOptionSelect2 = optionPlus2Select2; // Armazenar a opção anterior selecionada do select 2
 
-  select2.addEventListener("change", () => {
-    select1.querySelector(`option[value="${select2.value}"]`).disabled = true;
+  let selectedOption2 = null;
+
+  select1.addEventListener("change", () => {
+    const selectedValue = select1.value;
+  
+    // Reativar todas as opções do select2
+    select2.querySelectorAll('option').forEach((option, index) => {
+      option.disabled = false;
+      if (index === 0) {
+        option.disabled = true; // Desativar a primeira opção do select2
+      }
+    });
+  
+    // Desativar a opção selecionada no select2
+    select2.querySelector(`option[value="${selectedValue}"]`).disabled = true;
+  
+    // Verificar se a opção selecionada no select2 é a mesma do select1
+    if (selectedOption2 === selectedValue || selectedValue === "+2") {
+      selectedOption2 = null; // Limpar a seleção no select2
+      select2.value = ''; // Limpar a seleção visualmente no select2
+    }
   });
+  
+  select2.addEventListener("change", () => {
+    const selectedValue = select2.value;
+  
+    // Reativar todas as opções do select1
+    select1.querySelectorAll('option').forEach((option, index) => {
+      option.disabled = false;
+      if (index === 0) {
+        option.disabled = true; // Desativar a primeira opção do select1
+      }
+    });
+  
+    // Desativar a opção selecionada no select1
+    select1.querySelector(`option[value="${selectedValue}"]`).disabled = true;
+  
+    selectedOption2 = selectedValue;
+  });
+  
+  
+
+
+
+
+  const bonusTextDiv = document.getElementById("bonus-text");
+  bonusTextDiv.disabled = true;
 }
 
 function criarSelectsVRGR(selectedSubrace) {
   const selectContainer = document.getElementById("select-container");
-  selectContainer.innerHTML = ""; // Limpar o conteúdo existente
+  selectContainer.textContent = ""; // Limpar o conteúdo existente
 
   const select = document.createElement("select");
+  select.id = "VRGROptions";
   select.classList.add("form-select", "mb-3");
 
   const options = ["+2|+1", "+1|+1|+1"];
+
+    // Adicionar opção "escolha um opção:" ao primeiro select
+    const pointOptions = document.createElement("option");
+    pointOptions.value = "escolha um opção:";
+    pointOptions.textContent = "escolha um opção:";
+    pointOptions.selected = true; // Selecionar a opção
+    pointOptions.disabled = true; // Desativar a opção
+    select.appendChild(pointOptions);
 
   options.forEach((option) => {
     const optionElement = document.createElement("option");
@@ -261,23 +223,37 @@ function criarSelectsVRGR(selectedSubrace) {
     const selectedOption = select.value;
 
     if (selectedOption === "+2|+1") {
-      criarSelectsVRGRAttributes("+2", "+1");
+      criarSelectsVRGR21("+2", "+1");
     } else if (selectedOption === "+1|+1|+1") {
-      criarSelectsVRGRAttributes("+1", "+1", "+1");
+      //criarSelectsVRGRAttributes("+1", "+1", "+1");
     }
   });
 }
 
-function criarSelectsVRGRAttributes(attribute1, attribute2, attribute3) {
+
+
+function criarSelectsVRGR21(selectedSubrace) {
   const selectContainer = document.getElementById("select-container");
-  selectContainer.innerHTML = ""; // Limpar o conteúdo existente
 
-  const select1 = document.createElement("select");
-  select1.classList.add("form-select", "mb-3");
-  const select2 = document.createElement("select");
-  select2.classList.add("form-select", "mb-3");
+// Verifica se selectContainer existe
+if (selectContainer) {
+  // Obtém todos os filhos de selectContainer
+  const children = Array.from(selectContainer.children);
 
-  const attributes = [
+  // Itera pelos filhos e remove aqueles que não possuem o ID desejado
+  children.forEach((child) => {
+    if (child.id !== "VRGROptions") {
+      selectContainer.removeChild(child);
+    }
+  });
+}
+
+  const attribute1 = document.createElement("select");
+  attribute1.classList.add("form-select", "mb-3");
+  const attribute2 = document.createElement("select");
+  attribute2.classList.add("form-select", "mb-3");
+
+  const options = [
     "Strength",
     "Dexterity",
     "Constitution",
@@ -286,29 +262,174 @@ function criarSelectsVRGRAttributes(attribute1, attribute2, attribute3) {
     "Charisma",
   ];
 
-  attributes.forEach((attribute) => {
+  // Adicionar opção "+2" ao primeiro select
+  const optionPlus2 = document.createElement("option");
+  optionPlus2.value = "+2";
+  optionPlus2.textContent = "+2";
+  optionPlus2.selected = true; // Selecionar a opção
+  optionPlus2.disabled = true; // Desativar a opção
+  attribute1.appendChild(optionPlus2);
+
+  options.forEach((option) => {
     const option1 = document.createElement("option");
-    option1.value = attribute;
-    option1.textContent = `${attribute} ${attribute1}`;
-    select1.appendChild(option1);
+    option1.value = option;
+    option1.textContent = option;
+    attribute1.appendChild(option1);
+  });
 
+  // Adicionar opção "+1" ao segundo select
+  const optionPlus2Select2 = document.createElement("option");
+  optionPlus2Select2.value = "+1";
+  optionPlus2Select2.textContent = "+1";
+  optionPlus2Select2.selected = true; // Selecionar a opção
+  optionPlus2Select2.disabled = true; // Desativar a opção
+  attribute2.appendChild(optionPlus2Select2);
+
+  options.forEach((option) => {
     const option2 = document.createElement("option");
-    option2.value = attribute;
-    option2.textContent = `${attribute} ${attribute2}`;
-    select2.appendChild(option2);
+    option2.value = option;
+    option2.textContent = option;
+    attribute2.appendChild(option2);
   });
 
-  selectContainer.appendChild(select1);
-  selectContainer.appendChild(select2);
+  selectContainer.appendChild(attribute1);
+  selectContainer.appendChild(attribute2);
 
-  select1.addEventListener("change", () => {
-    select2.querySelector(`option[value="${select1.value}"]`).disabled = true;
-  });
+  let previousOptionSelect1 = optionPlus2; // Armazenar a opção anterior selecionada do select 1
+  let previousOptionSelect2 = optionPlus2Select2; // Armazenar a opção anterior selecionada do select 2
 
-  select2.addEventListener("change", () => {
-    select1.querySelector(`option[value="${select2.value}"]`).disabled = true;
+  let selectedOption2 = null;
+
+  attribute1.addEventListener("change", () => {
+    const selectedValue = attribute1.value;
+  
+    // Reativar todas as opções do select2
+    attribute2.querySelectorAll('option').forEach((option, index) => {
+      option.disabled = false;
+      if (index === 0) {
+        option.disabled = true; // Desativar a primeira opção do select2
+      }
+    });
+  
+    // Desativar a opção selecionada no select2
+    attribute2.querySelector(`option[value="${selectedValue}"]`).disabled = true;
+  
+    // Verificar se a opção selecionada no select2 é a mesma do select1
+    if (selectedOption2 === selectedValue || selectedValue === "+2") {
+      selectedOption2 = null; // Limpar a seleção no select2
+      attribute2.value = ''; // Limpar a seleção visualmente no select2
+    }
   });
+  
+  attribute2.addEventListener("change", () => {
+    const selectedValue = attribute2.value;
+  
+    // Reativar todas as opções do select1
+    attribute1.querySelectorAll('option').forEach((option, index) => {
+      option.disabled = false;
+      if (index === 0) {
+        option.disabled = true; // Desativar a primeira opção do select1
+      }
+    });
+  
+    // Desativar a opção selecionada no select1
+    attribute1.querySelector(`option[value="${selectedValue}"]`).disabled = true;
+  
+    selectedOption2 = selectedValue;
+  });
+  
+  
+
+
+
+
+  const bonusTextDiv = document.getElementById("bonus-text");
+  bonusTextDiv.disabled = true;
 }
+
+
+
+
+
+
+function atualizarAtributos(selectedSubrace) {
+  fetch("../data/races.json")
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Seleção:", selectedSubrace);
+
+      let selectedData;
+
+      if (selectedSubrace.includes("race")) {
+        const selectedRaceName = selectedSubrace.split(" (")[0];
+        selectedData = data.race.find((race) => race.name === selectedRaceName);
+        console.log("Raça selecionada:", selectedRaceName);
+      } else if (selectedSubrace.includes("subrace")) {
+        const selectedSubraceName = selectedSubrace.split(" (")[0];
+        selectedData = data.subrace.find((subrace) => subrace.name === selectedSubraceName);
+        console.log("Subraça selecionada:", selectedSubraceName);
+      }
+
+      if (!selectedData) {
+        const matchingRace = data.race.find((race) => race.name.includes(selectedSubrace));
+        if (matchingRace) {
+          selectedData = matchingRace;
+          console.log("Raça selecionada:", matchingRace.name);
+        } else {
+          const matchingSubrace = data.subrace.find((subrace) => subrace.name.includes(selectedSubrace));
+          if (matchingSubrace) {
+            selectedData = matchingSubrace;
+            console.log("Subraça selecionada:", matchingSubrace.name);
+          }
+        }
+      }
+
+      if (!selectedData) {
+        console.error("Raça ou subraça não encontrada no arquivo JSON");
+        console.log("Raça ou subraça selecionada:", selectedSubrace);
+        console.log("Raças disponíveis:", data.race.map((race) => race.name));
+        console.log("Subraças disponíveis:", data.subrace.map((subrace) => subrace.name));
+        return;
+      }
+
+      console.log("passou");
+      const bonusTextDiv = document.getElementById("bonus-text");
+      const selectContainer = document.getElementById("select-container");
+
+      if (selectedData.hasOwnProperty("ability")) {
+        bonusTextDiv.textContent = JSON.stringify(selectedData.ability, (key, value) => {
+          if (typeof value === 'object' && Object.keys(value).length === 0) {
+            return '';
+          }
+          return value;
+        });
+        selectContainer.textContent = ""; // Limpar o conteúdo existente
+      } else if (selectedData.hasOwnProperty("lineage")) {
+        const lineage = selectedData.lineage;
+        selectContainer.textContent = ""; // Limpar o conteúdo existente
+
+        if (lineage === "UA1") {
+          // Código para criar os dois selects com +2 e +1
+          criarSelectsUA1(selectedSubrace);
+        } else if (lineage === "VRGR") {
+          // Código para criar o select com as opções "+2|+1" e "+1|+1|+1"
+          criarSelectsVRGR(selectedSubrace);
+        }
+      } else {
+        console.log("É uma cópia");
+        selectContainer.textContent = ""; // Limpar o conteúdo existente
+      }
+    })
+    .catch((error) => {
+      console.error("Erro ao carregar o JSON races.json:", error);
+    });
+}
+
+
+
+
+
+
 
 
 
@@ -329,11 +450,13 @@ document.addEventListener("DOMContentLoaded", () => {
   raceSelect.addEventListener("change", () => {
     const selectedRaceName = raceSelect.value.split(" (")[0];
     carregarOpcoesSubracas(selectedRaceName, "subraces-select");
+    
     if (selectedRaceName) {
       
     } else {
       const bonusTextDiv = document.getElementById("bonus-text");
       bonusTextDiv.textContent = "";
+      ;
     }
   });
 
